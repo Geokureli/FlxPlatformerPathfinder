@@ -1,0 +1,65 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Chrome (Debug)",
+			"type": "chrome",
+			"request": "launch",
+			"url": "http://127.0.0.1:3001",
+			"sourceMaps": true,
+			"webRoot": "${workspaceFolder}",
+			// "runtimeArgs": ["--disable-web-security"],
+			"preLaunchTask": "debug: html"
+		},
+		{
+			"name": "Chrome",
+			"type": "chrome",
+			"request": "launch",
+			"url": "http://127.0.0.1:3001",
+			"sourceMaps": true,
+			"webRoot": "${workspaceFolder}",
+			// "runtimeArgs": ["--disable-web-security"],
+			"preLaunchTask": "release: html"
+		},
+		{
+			"name": "Chrome (debug) -canvas",
+			"type": "chrome",
+			"request": "launch",
+			"url": "http://127.0.0.1:3001",
+			"sourceMaps": true,
+			"webRoot": "${workspaceFolder}",
+			// "runtimeArgs": ["--disable-web-security"],
+			"preLaunchTask": "debug: html-canvas"
+		},
+		{
+			"name": "FireFox",
+			"type": "firefox",
+			"request": "launch",
+			// "reAttach": true,
+			"url": "http://127.0.0.1:3001",
+			"webRoot": "${workspaceFolder}",
+			"preLaunchTask": "debug: html"
+		},
+		{
+			"name": "FireFox -attach",
+			"type": "firefox",
+			"request": "attach",
+			"url": "http://127.0.0.1:3000",
+			"webRoot": "${workspaceFolder}"
+		},
+		{
+			"name": "Mac",
+			"type": "hxcpp",
+			"request": "launch",
+			"program": "${workspaceRoot}/export/macos/bin/EZPlatformer.app/Contents/MacOS/EZPlatformer",
+			"preLaunchTask": "release: mac"
+		},
+		{
+			"name": "Mac (Debug)",
+			"type": "hxcpp",
+			"request": "launch",         
+			"program": "${workspaceRoot}/export/macos/bin/EZPlatformer.app/Contents/MacOS/EZPlatformer",
+			"preLaunchTask": "debug: mac"
+		}
+	]
+}
