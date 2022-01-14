@@ -350,7 +350,7 @@ private class FlxPlatformerPathfinderData extends FlxPathfinderData
 			|| inJumpReach.indexOf(yDis * map.widthInTiles + xDis) != -1;
 		
 		//Todo: check if it's not blocked by a wall
-		var blocked = xDis == 0 && canStand(from);
+		var blocked = xDis == 0 && (canStand(from) || yDis < 0);
 		return inReach
 			&& blocked == false;
 			
