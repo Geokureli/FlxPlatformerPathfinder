@@ -27,6 +27,7 @@ class FlxPlatformerPathfinder extends FlxTypedPathfinder<FlxPlatformerPathfinder
 		this.jumpHeight = jumpHeight;
 		this.timeToApex = timeToApex;
 		this.maxVelocity = maxVelocity;
+		this.height = height;
 		flatJumpDistance = 2 * timeToApex * maxVelocity.x;
 		
 		super(FlxPlatformerPathfinderData.new.bind(this, _, _, _));
@@ -70,17 +71,14 @@ class FlxPlatformerPathfinder extends FlxTypedPathfinder<FlxPlatformerPathfinder
 		var down = y < cols - 1;
 		
 		var neighbors = [];
-		inline function addIfStand(condition = true, to)
-		{
-			if (condition && data.canStand(to))
-				neighbors.push(to);
-		}
 		
 		if (data.canStand(from))
 		{
 			// only walk 1 tile at a time
-			addIfStand(right, from + 1);
-			addIfStand(left, from - 1);
+			var canStepRight = right && data.canStand(from + 1);
+			var canStepLeft = left && data.canStand(from - 1);
+			if (canStepRight) neighbors.push(from + 1);
+			if (canStepLeft) neighbors.push(from - 1);
 			
 			var jumpDistanceInt = Std.int(flatJumpDistance);
 			var top = y - Math.floor(jumpHeight);
@@ -97,8 +95,21 @@ class FlxPlatformerPathfinder extends FlxTypedPathfinder<FlxPlatformerPathfinder
 				for (toX in left...right)
 				{
 					final to = toY * cols + toX;
-					if (data.canStand(to) && data.canWalk(from, to) == false && data.canJump(from, to))
-						neighbors.push(to);
+					if (data.canStand(to)
+					&& data.canWalk(from, to) == false
+					&& data.canJump(from, to))
+					{
+						var add = true;
+						
+						if (toY > y// if falling down
+						&& (canStepRight && toX >= x) || (canStepLeft && toX <= x))
+						{
+							add = false;
+						}
+						
+						if (add)
+							neighbors.push(to);
+					}
 				}
 			}
 		}
@@ -185,7 +196,7 @@ typedef Data = FlxPlatformerPathfinderData;
 private class FlxPlatformerPathfinderData extends FlxPathfinderData
 {
 	/** Every tile in the map the platformer can stand on */
-	var platforms:Array<Bool>;
+	var platforms:Array<Int>;
 	
 	/** List of tiles you can jump to (listed as the difference of indices from any tile) */
 	var inJumpReach:Array<Int>;
@@ -194,11 +205,17 @@ private class FlxPlatformerPathfinderData extends FlxPathfinderData
 	{
 		super(map, start, end);
 		
-		platforms =
-		[
-			for (i in 0...map.totalTiles)
-				canPhysicallyStand(pathfinder, i)
-		];
+		platforms = [];
+		
+		for (i in 0...map.totalTiles)
+		{
+			if (canPhysicallyStand(pathfinder, i))
+			{
+				platforms.push(i);
+			}
+		}
+		
+		// debugShowPlatformTiles();
 		
 		var jumpReach = Std.int(pathfinder.flatJumpDistance);
 		
@@ -217,6 +234,20 @@ private class FlxPlatformerPathfinderData extends FlxPathfinderData
 		inJumpReach.remove(-1);
 		inJumpReach.remove(1);
 		
+	}
+	
+	/**
+	 * Used to visually verify that it's identifying the right tiles as platforms.
+	 * To use, uncomment above (in `new`), click and see if all is right the tiles you could
+	 * stand on will the only solid tiles (rendering the path somewhat useless).
+	 */
+	function debugShowPlatformTiles()
+	{
+		for (i in 0...map.totalTiles)
+			map.setTileByIndex(i, 0, true);
+		
+		for (i in platforms)
+			map.setTileByIndex(i, 15, true);
 	}
 	
 	function canPhysicallyJumpTo(pathfinder:FlxPlatformerPathfinder, x:Int, y:Int)
@@ -247,18 +278,20 @@ private class FlxPlatformerPathfinderData extends FlxPathfinderData
 		while (i-- > 0)
 		{
 			var aboveIndex = index - cols * i;
-			if (aboveIndex > 0 || getTileCollisionsByIndex(index) != NONE)
+			trace(index, x, y, aboveIndex, getX(aboveIndex), getY(aboveIndex), getTileCollisionsByIndex(aboveIndex));
+			// can't occupy
+			if (getTileCollisionsByIndex(aboveIndex) != NONE)
 				return false;
 		}
 		
-		// has floor beneath
 		return y < rows - 1
+			// has floor beneath
 			&& (getTileCollisionsByIndex(index + cols):FlxDirectionFlags).has(FLOOR);
 	}
 	
 	function canStand(index:Int):Bool
 	{
-		return platforms[index];
+		return platforms.indexOf(index) != -1;
 	}
 	
 	function canWalk(from:Int, to:Int)
@@ -312,9 +345,14 @@ private class FlxPlatformerPathfinderData extends FlxPathfinderData
 		var xDis = getX(to) - getX(from);
 		var yDis = getY(to) - getY(from);
 		
-		//Todo: check if it's not blocked by a wall
 		
-		return yDis > 0
+		var inReach = yDis > 0
 			|| inJumpReach.indexOf(yDis * map.widthInTiles + xDis) != -1;
+		
+		//Todo: check if it's not blocked by a wall
+		var blocked = xDis == 0 && canStand(from);
+		return inReach
+			&& blocked == false;
+			
 	}
 }
